@@ -3,7 +3,7 @@ name = "impactlint"
 version = "0.1.0"
 description = "Metadata-aware data change reviews powered by DataHub and Paritok"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Jerry Ni" }]
 dependencies = [
@@ -36,7 +36,7 @@ testpaths = ["backend/tests"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py311"
+target-version = "py312"
 src = ["backend/src"]
 
 [tool.ruff.lint]

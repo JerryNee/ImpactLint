@@ -5,6 +5,8 @@
 
 ImpactLint reviews proposed warehouse schema changes against catalog metadata before they reach production. It parses SQL, traces downstream lineage, scores risk from ownership, tags, and quality signals, then produces a migration plan and CI-friendly review artifacts.
 
+**Live demo:** [impactlint.vercel.app](https://impactlint.vercel.app)
+
 The project is built for the 2026 DataHub Agent Hackathon and Paritok Token Efficiency Hackathon. It supports a self-contained fixture mode as well as live [DataHub MCP](https://github.com/acryldata/mcp-server-datahub) reads and writes. Built with [Paritok](https://github.com/Paritok-official/paritok-4b-v1) to compress the evidence packet on its hosted GPU before downstream reasoning.
 
 ## Workflow
@@ -34,9 +36,11 @@ On August 2, 2026, the checked-in customer-key scenario ran against a local Data
 
 The captured, non-secret result is available in [`examples/live-review-summary.json`](examples/live-review-summary.json). Hosted latency and compression output can vary between runs.
 
+The public demo uses the reproducible fixture catalog and the real Paritok hosted API. Its smaller input intentionally produces a lower reduction than the full DataHub MCP response above; both views report exact model-output and guarded-final counts.
+
 ## Local development
 
-Requirements: Python 3.11+, `uv`, Node.js 20+, and npm.
+Requirements: Python 3.12+, `uv`, Node.js 20+, and npm.
 
 ```bash
 uv sync
@@ -61,6 +65,16 @@ PARITOK_MODEL=paritok-4b-v1
 ```
 
 Secrets in `.env` are ignored by Git.
+
+## Deployment
+
+ImpactLint deploys as one FastAPI application on Vercel. The API serves the built React client and the `/api` routes from the same origin. Configure `IMPACTLINT_MODE=fixture` and add `PARITOK_API_KEY` as a sensitive environment variable, then deploy:
+
+```bash
+npx vercel --prod
+```
+
+`.vercelignore` prevents local secrets, virtual environments, generated data, and build output from entering the deployment source bundle.
 
 ## Live DataHub demo
 
