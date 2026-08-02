@@ -67,7 +67,7 @@ def fixture_context() -> CatalogContext:
             quality_signals=["feature null-rate monitor"],
         ),
         Asset(
-            urn="urn:li:dataset:(urn:li:dataPlatform:looker,executive.revenue_overview,PROD)",
+            urn="urn:li:dashboard:(looker,executive.revenue_overview)",
             name="executive.revenue_overview",
             platform="Looker",
             kind="dashboard",

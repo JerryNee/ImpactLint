@@ -92,7 +92,7 @@ class ImpactSignal(BaseModel):
 
 
 class GeneratedArtifact(BaseModel):
-    kind: Literal["migration_plan", "dbt_tests", "review_manifest"]
+    kind: Literal["migration_plan", "dbt_tests", "review_manifest", "compressed_context"]
     path: str
     language: str
     content: str

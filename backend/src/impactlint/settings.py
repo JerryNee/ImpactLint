@@ -12,12 +12,11 @@ class Settings(BaseSettings):
     )
 
     impactlint_mode: Literal["fixture", "datahub"] = "fixture"
-    datahub_mcp_url: str = "http://localhost:8000/mcp"
+    datahub_mcp_url: str = "http://localhost:8001/mcp"
     datahub_mcp_token: str = ""
-    paritok_proxy_url: str = "http://localhost:8080"
+    paritok_api_url: str = "https://www.paritok.com/api"
     paritok_api_key: str = ""
-    llm_model: str = "gpt-4.1-mini"
-    llm_api_key: str = ""
+    paritok_model: str = "paritok-4b-v1"
 
 
 @lru_cache

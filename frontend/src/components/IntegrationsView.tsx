@@ -30,7 +30,7 @@ export function IntegrationsView({ integrations }: { integrations: Integration[]
               </div>
               <StatusBadge status={integration.status} />
               <span>{integration.detail}</span>
-              <code>{integration.id === "datahub" ? "MCP" : "HTTP proxy"}</code>
+              <code>{integration.id === "datahub" ? "MCP" : "Hosted GPU"}</code>
             </div>
           );
         })}
@@ -47,20 +47,25 @@ export function IntegrationsView({ integrations }: { integrations: Integration[]
         <div className="config-list">
           <div>
             <code>IMPACTLINT_MODE</code>
-            <span>fixture</span>
+            <span>fixture | datahub</span>
           </div>
           <div>
             <code>DATAHUB_MCP_URL</code>
-            <span>http://localhost:8000/mcp</span>
+            <span>http://localhost:8001/mcp</span>
           </div>
           <div>
-            <code>PARITOK_PROXY_URL</code>
-            <span>http://localhost:8080</span>
+            <code>PARITOK_API_URL</code>
+            <span>https://www.paritok.com/api</span>
           </div>
         </div>
-        <a href="https://github.com/acryldata/mcp-server-datahub" target="_blank" rel="noreferrer">
-          <CircleHelp aria-hidden="true" /> DataHub MCP reference <ExternalLink aria-hidden="true" />
-        </a>
+        <div className="reference-links">
+          <a href="https://github.com/acryldata/mcp-server-datahub" target="_blank" rel="noreferrer">
+            <CircleHelp aria-hidden="true" /> DataHub MCP reference <ExternalLink aria-hidden="true" />
+          </a>
+          <a href="https://github.com/Paritok-official/paritok-4b-v1" target="_blank" rel="noreferrer">
+            <CircleHelp aria-hidden="true" /> Paritok reference <ExternalLink aria-hidden="true" />
+          </a>
+        </div>
       </section>
     </div>
   );

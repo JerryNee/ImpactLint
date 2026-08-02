@@ -20,10 +20,9 @@ def create_service(settings: Settings) -> ReviewService:
     else:
         catalog = FixtureCatalogProvider()
     paritok = ParitokClient(
-        settings.paritok_proxy_url,
+        settings.paritok_api_url,
         settings.paritok_api_key,
-        settings.llm_model,
-        settings.llm_api_key,
+        settings.paritok_model,
     )
     return ReviewService(catalog, paritok, settings.impactlint_mode)
 

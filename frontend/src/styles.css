@@ -644,6 +644,42 @@ pre,
   line-height: 1.25;
 }
 
+.compression-result {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 15px;
+  padding: 10px 0;
+  color: var(--color-primary-strong);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compression-result > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.compression-result > div {
+  display: grid;
+  gap: 2px;
+}
+
+.compression-result strong {
+  font-size: 12px;
+}
+
+.compression-result span,
+.compression-result code {
+  color: var(--color-muted);
+  font-size: 10px;
+}
+
+.compression-result code {
+  color: var(--color-primary-strong);
+  white-space: nowrap;
+}
+
 .result-actions {
   display: flex;
   align-items: center;
@@ -1380,22 +1416,28 @@ pre,
   white-space: nowrap;
 }
 
-.runtime-config > a {
+.reference-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin-top: 16px;
+}
+
+.reference-links a {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 16px;
   color: var(--color-primary-strong);
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
 }
 
-.runtime-config > a svg {
+.reference-links a svg {
   width: 14px;
 }
 
-.runtime-config > a:hover {
+.reference-links a:hover {
   text-decoration: underline;
 }
 
@@ -1611,6 +1653,14 @@ pre,
   .result-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .compression-result {
+    grid-template-columns: 26px minmax(0, 1fr);
+  }
+
+  .compression-result code {
+    grid-column: 2;
   }
 
   .secondary-button {

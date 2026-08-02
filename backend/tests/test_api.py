@@ -10,7 +10,7 @@ from impactlint.service import ReviewService
 def _demo_service() -> ReviewService:
     return ReviewService(
         FixtureCatalogProvider(),
-        ParitokClient("http://localhost:8080", "", "gpt-4.1-mini", ""),
+        ParitokClient("https://www.paritok.com/api", "", "paritok-4b-v1"),
         "fixture",
     )
 

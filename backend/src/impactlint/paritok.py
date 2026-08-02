@@ -10,81 +10,79 @@ from impactlint.models import CompressionMetrics
 
 
 def count_tokens(value: Any) -> int:
-    text = json.dumps(value, separators=(",", ":"), sort_keys=True)
+    text = value if isinstance(value, str) else json.dumps(value, separators=(",", ":"), sort_keys=True)
     return len(tiktoken.get_encoding("cl100k_base").encode(text))
 
 
 class ParitokClient:
-    def __init__(self, base_url: str, api_key: str, model: str, llm_api_key: str) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
-        self.llm_api_key = llm_api_key
+        self.transport = transport
 
     @property
     def configured(self) -> bool:
-        return bool(self.api_key and self.llm_api_key)
+        return bool(self.api_key)
 
-    async def explain(self, context: dict[str, Any], prompt: str) -> tuple[str | None, CompressionMetrics]:
-        original_tokens = count_tokens(context)
+    async def compress_context(
+        self,
+        context: dict[str, Any],
+        query: str,
+    ) -> tuple[str | None, CompressionMetrics]:
+        serialized = json.dumps(context, separators=(",", ":"), sort_keys=True)
+        original_tokens = count_tokens(serialized)
         if not self.configured:
             return None, CompressionMetrics(
                 status="not_connected",
                 original_tokens=original_tokens,
-                source="Local token count; connect Paritok to measure compression",
+                source="Local token count; add a Paritok API key to measure hosted compression",
             )
 
-        headers = {
-            "Authorization": f"Bearer {self.llm_api_key}",
-            "X-Paritok-API-Key": self.api_key,
-            "Content-Type": "application/json",
-        }
-        async with httpx.AsyncClient(timeout=60) as client:
-            before = await _stats(client, self.base_url)
-            response = await client.post(
-                f"{self.base_url}/v1/chat/completions",
-                headers=headers,
-                json={
-                    "model": self.model,
-                    "temperature": 0,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You explain data-change risk using only the supplied evidence.",
-                        },
-                        {
-                            "role": "user",
-                            "content": f"{prompt}\n\nCATALOG CONTEXT:\n{json.dumps(context)}",
-                        },
-                    ],
-                },
+        try:
+            async with httpx.AsyncClient(timeout=120, transport=self.transport) as client:
+                response = await client.post(
+                    f"{self.base_url}/compress",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    json={
+                        "model": self.model,
+                        "content": serialized,
+                        "query": query,
+                        "kind": "other",
+                        "upstream_model": "impactlint-reviewer",
+                    },
+                )
+                response.raise_for_status()
+        except httpx.HTTPError as exc:
+            return None, CompressionMetrics(
+                status="not_connected",
+                original_tokens=original_tokens,
+                source=f"Paritok hosted GPU unavailable: {type(exc).__name__}",
             )
-            response.raise_for_status()
-            after = await _stats(client, self.base_url)
 
         payload = response.json()
-        explanation = payload["choices"][0]["message"]["content"]
-        original_delta = max(
-            0, after.get("input_tokens_original", 0) - before.get("input_tokens_original", 0)
-        )
-        compressed_delta = max(
-            0,
-            after.get("input_tokens_compressed", 0) - before.get("input_tokens_compressed", 0),
-        )
-        measured_original = original_delta or original_tokens
-        saved = max(0, measured_original - compressed_delta)
-        reduction = round((saved / measured_original) * 100, 1) if measured_original else 0.0
-        return explanation, CompressionMetrics(
+        compressed = payload.get("compressed")
+        if not payload.get("gpu_available") or not isinstance(compressed, str):
+            return None, CompressionMetrics(
+                status="not_connected",
+                original_tokens=original_tokens,
+                source=str(payload.get("message") or "Paritok returned no compressed context"),
+            )
+
+        compressed_tokens = count_tokens(compressed)
+        saved = max(0, original_tokens - compressed_tokens)
+        reduction = round((saved / original_tokens) * 100, 1) if original_tokens else 0.0
+        return compressed, CompressionMetrics(
             status="measured",
-            original_tokens=measured_original,
-            compressed_tokens=compressed_delta,
+            original_tokens=original_tokens,
+            compressed_tokens=compressed_tokens,
             tokens_saved=saved,
             reduction_percent=reduction,
-            source="Paritok proxy /stats delta",
+            source="Paritok hosted GPU response; exact request and response token counts",
         )
-
-
-async def _stats(client: httpx.AsyncClient, base_url: str) -> dict[str, int]:
-    response = await client.get(f"{base_url}/stats")
-    response.raise_for_status()
-    return response.json()

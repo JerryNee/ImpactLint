@@ -6,6 +6,7 @@ from impactlint.catalog import CatalogProvider
 from impactlint.change_parser import parse_change
 from impactlint.engine import affected_assets, context_payload, generate_artifacts, score_review
 from impactlint.models import (
+    GeneratedArtifact,
     Integration,
     IntegrationStatus,
     ReviewRequest,
@@ -59,15 +60,29 @@ class ReviewService:
 
         started = perf_counter()
         payload = context_payload(context, operations, affected)
-        explanation, compression = await self.paritok.explain(
+        compressed_context, compression = await self.paritok.compress_context(
             payload,
-            "Explain the highest-risk evidence and the safest migration sequence in four sentences.",
+            "Preserve evidence needed to explain the highest-risk schema impact and migration order.",
         )
+        if compressed_context:
+            artifacts.append(
+                GeneratedArtifact(
+                    kind="compressed_context",
+                    path="artifacts/paritok-context.txt",
+                    language="text",
+                    content=compressed_context,
+                    rationale="The exact context returned by Paritok's hosted GPU for downstream reasoning.",
+                )
+            )
         steps.append(
             _step(
                 "compression",
                 "Optimize reasoning context",
-                "Measured by Paritok" if compression.status == "measured" else "Paritok not connected",
+                (
+                    f"{compression.original_tokens} to {compression.compressed_tokens} tokens"
+                    if compression.status == "measured"
+                    else "Paritok not connected"
+                ),
                 started,
                 status="complete" if compression.status == "measured" else "skipped",
             )
@@ -87,7 +102,7 @@ class ReviewService:
             risk_score=score,
             risk_level=level,
             headline=f"{level.value.title()} risk: coordinate before merge",
-            summary=explanation or default_summary,
+            summary=default_summary,
             operations=operations,
             target=target,
             affected_assets=affected,
@@ -117,7 +132,7 @@ class ReviewService:
                 status=IntegrationStatus.CONNECTED
                 if self.paritok.configured
                 else IntegrationStatus.UNAVAILABLE,
-                detail="Compression measured" if self.paritok.configured else "Add API keys to measure",
+                detail="Hosted GPU configured" if self.paritok.configured else "Add API key to measure",
             ),
         ]
 

@@ -35,7 +35,12 @@ def affected_assets(context: CatalogContext, operations: list[ChangeOperation]) 
             asset = asset_by_urn.get(child)
             if asset is None:
                 continue
-            if not changed_fields or changed_fields.intersection(asset.depends_on_fields) or asset.layer > 1:
+            if (
+                not changed_fields
+                or not asset.depends_on_fields
+                or changed_fields.intersection(asset.depends_on_fields)
+                or asset.layer > 1
+            ):
                 affected.append(asset)
     return affected
 

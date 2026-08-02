@@ -54,7 +54,7 @@ export interface ImpactSignal {
 }
 
 export interface GeneratedArtifact {
-  kind: "migration_plan" | "dbt_tests" | "review_manifest";
+  kind: "migration_plan" | "dbt_tests" | "review_manifest" | "compressed_context";
   path: string;
   language: string;
   content: string;

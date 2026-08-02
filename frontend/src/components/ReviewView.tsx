@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   Play,
   Send,
+  Zap,
 } from "lucide-react";
 
 import type { GeneratedArtifact, ReviewRequest, ReviewResponse, Scenario } from "../types";
@@ -180,6 +181,20 @@ export function ReviewView({
                   <span>Context tokens</span>
                 </div>
               </div>
+
+              {review.compression.status === "measured" ? (
+                <div className="compression-result">
+                  <Zap aria-hidden="true" />
+                  <div>
+                    <strong>{review.compression.reduction_percent}% fewer context tokens</strong>
+                    <span>Paritok hosted GPU</span>
+                  </div>
+                  <code>
+                    {review.compression.original_tokens.toLocaleString()} →{" "}
+                    {review.compression.compressed_tokens?.toLocaleString()}
+                  </code>
+                </div>
+              ) : null}
 
               <div className="result-actions">
                 <span className="deterministic-label">
