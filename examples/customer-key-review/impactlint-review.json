@@ -1,0 +1,25 @@
+{
+  "target": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.customer_360,PROD)",
+  "risk_score": 100,
+  "operations": [
+    {
+      "kind": "rename_column",
+      "table": "analytics.customer_360",
+      "field": "customer_id",
+      "replacement": "customer_key",
+      "rendered_sql": "RENAME COLUMN customer_id TO customer_key"
+    }
+  ],
+  "affected_assets": [
+    "urn:li:dataset:(urn:li:dataPlatform:dbt,finance.monthly_revenue,PROD)",
+    "urn:li:dataset:(urn:li:dataPlatform:dbt,ml.churn_features,PROD)",
+    "urn:li:dataset:(urn:li:dataPlatform:snowflake,growth.campaign_segments,PROD)",
+    "urn:li:dashboard:(looker,executive.revenue_overview)"
+  ],
+  "required_owners": [
+    "Business Intelligence",
+    "Finance Analytics",
+    "Growth Engineering",
+    "Lifecycle ML"
+  ]
+}

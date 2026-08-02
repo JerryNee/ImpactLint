@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: customer_360
+    columns:
+      - name: customer_key
+        data_tests:
+          - not_null
+          - unique

@@ -1,0 +1,25 @@
+IMPACTLINT REVIEW EVIDENCE
+SOURCE | provider=fixture | transport=fixture | responses=none
+CHANGE | kind=rename_column | table=analytics.customer_360 | field=customer_id | replacement=customer_key | sql=RENAME COLUMN customer_id TO customer_key
+INFO DESCRIPTION | asset=analytics.customer_360 | text=Canonical customer profile used across finance, growth, and ML.
+INFO DESCRIPTION | asset=finance.monthly_revenue | text=Monthly recognized revenue by customer segment.
+INFO DESCRIPTION | asset=ml.churn_features | text=Feature view for the production churn model.
+INFO DESCRIPTION | asset=growth.campaign_segments | text=Daily activation audiences for lifecycle campaigns.
+INFO DESCRIPTION | asset=executive.revenue_overview | text=Executive revenue and customer value dashboard.
+WARNING TARGET | name=analytics.customer_360 | urn=urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.customer_360,PROD) | platform=Snowflake | layer=0 | depends_on=none | fields=customer_id, email_hash, lifetime_value, last_order_at, churn_score | owners=Customer Data Platform | tags=Tier 1, PII, Certified | quality=customer_id uniqueness assertion, daily freshness SLA
+WARNING AFFECTED | name=finance.monthly_revenue | urn=urn:li:dataset:(urn:li:dataPlatform:dbt,finance.monthly_revenue,PROD) | platform=dbt | layer=1 | depends_on=customer_id, lifetime_value | fields=month, customer_id, recognized_revenue | owners=Finance Analytics | tags=Tier 1, SOX | quality=revenue reconciliation check
+WARNING AFFECTED | name=ml.churn_features | urn=urn:li:dataset:(urn:li:dataPlatform:dbt,ml.churn_features,PROD) | platform=dbt | layer=1 | depends_on=customer_id, lifetime_value, last_order_at | fields=customer_id, lifetime_value_90d, days_since_order | owners=Lifecycle ML | tags=Production ML | quality=feature null-rate monitor
+WARNING AFFECTED | name=growth.campaign_segments | urn=urn:li:dataset:(urn:li:dataPlatform:snowflake,growth.campaign_segments,PROD) | platform=Snowflake | layer=1 | depends_on=customer_id, churn_score | fields=customer_id, segment, eligible_at | owners=Growth Engineering | tags=Daily Activation | quality=segment volume anomaly
+WARNING AFFECTED | name=executive.revenue_overview | urn=urn:li:dashboard:(looker,executive.revenue_overview) | platform=Looker | layer=2 | depends_on=customer_id, lifetime_value | fields=none | owners=Business Intelligence | tags=Executive, Tier 1 | quality=none
+WARNING LINEAGE | source=urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.customer_360,PROD) | target=urn:li:dataset:(urn:li:dataPlatform:dbt,finance.monthly_revenue,PROD) | kind=lineage
+WARNING LINEAGE | source=urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.customer_360,PROD) | target=urn:li:dataset:(urn:li:dataPlatform:dbt,ml.churn_features,PROD) | kind=lineage
+WARNING LINEAGE | source=urn:li:dataset:(urn:li:dataPlatform:dbt,finance.monthly_revenue,PROD) | target=urn:li:dashboard:(looker,executive.revenue_overview) | kind=lineage
+WARNING LINEAGE | source=urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.customer_360,PROD) | target=urn:li:dataset:(urn:li:dataPlatform:snowflake,growth.campaign_segments,PROD) | kind=lineage
+WARNING SIGNAL | id=breaking-change | severity=high | title=Breaking schema operation | detail=The proposal contains rename column; consumers require a coordinated migration.
+WARNING SIGNAL | id=downstream-blast-radius | severity=high | title=4 downstream assets are in scope | detail=DataHub lineage connects the changed dataset to active transformations and products.
+WARNING SIGNAL | id=governed-assets | severity=critical | title=Governed and production-critical consumers | detail=The impact includes assets carrying Tier 1, SOX, executive, PII, or production ML metadata.
+WARNING SIGNAL | id=cross-team-coordination | severity=medium | title=Coordinate with 5 owner groups | detail=Ownership metadata shows that the migration crosses team boundaries.
+WARNING SIGNAL | id=quality-contracts | severity=medium | title=Existing quality contracts need updates | detail=Assertions and monitors reference the affected data path and should move with the change.
+
+[IMPACTLINT EVIDENCE GUARD]
+END | affected=4 | lineage_edges=4 | signals=5

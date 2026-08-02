@@ -7,6 +7,8 @@ ImpactLint reviews proposed warehouse schema changes against catalog metadata be
 
 **Live demo:** [impactlint.vercel.app](https://impactlint.vercel.app)
 
+![ImpactLint reviewing a warehouse contract](docs/impactlint-review.png)
+
 The project is built for the 2026 DataHub Agent Hackathon and Paritok Token Efficiency Hackathon. It supports a self-contained fixture mode as well as live [DataHub MCP](https://github.com/acryldata/mcp-server-datahub) reads and writes. Built with [Paritok](https://github.com/Paritok-official/paritok-4b-v1) to compress the evidence packet on its hosted GPU before downstream reasoning.
 
 ## Workflow
@@ -37,6 +39,8 @@ On August 2, 2026, the checked-in customer-key scenario ran against a local Data
 The captured, non-secret result is available in [`examples/live-review-summary.json`](examples/live-review-summary.json). Hosted latency and compression output can vary between runs.
 
 The public demo uses the reproducible fixture catalog and the real Paritok hosted API. Its smaller input intentionally produces a lower reduction than the full DataHub MCP response above; both views report exact model-output and guarded-final counts.
+
+Generated migration files from the public scenario are checked into [`examples/customer-key-review`](examples/customer-key-review) for inspection without running the application.
 
 ## Local development
 
