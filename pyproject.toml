@@ -1,0 +1,43 @@
+[project]
+name = "impactlint"
+version = "0.1.0"
+description = "Metadata-aware data change reviews powered by DataHub and Paritok"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Jerry Ni" }]
+dependencies = [
+  "fastapi>=0.141,<1",
+  "httpx>=0.28,<1",
+  "mcp>=2,<3",
+  "pydantic-settings>=2.14,<3",
+  "sqlglot>=30.14,<31",
+  "tiktoken>=0.13,<1",
+  "uvicorn[standard]>=0.52,<1",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=9.1,<10",
+  "pytest-asyncio>=1.3,<2",
+  "ruff>=0.14,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/src/impactlint"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["backend/tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["backend/src"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]

@@ -1,0 +1,19 @@
+{
+  "name": "impactlint",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "uv run uvicorn impactlint.main:app --app-dir backend/src --reload --host 127.0.0.1 --port 8000",
+    "dev:web": "npm --prefix frontend run dev -- --host 127.0.0.1",
+    "build": "npm --prefix frontend run build",
+    "test": "npm run test:api && npm run test:web",
+    "test:api": "uv run pytest backend/tests",
+    "test:web": "npm --prefix frontend run test",
+    "lint": "uv run ruff check backend && npm --prefix frontend run lint",
+    "format": "uv run ruff format backend && npm --prefix frontend run format"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
+
