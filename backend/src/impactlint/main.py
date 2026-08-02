@@ -99,7 +99,9 @@ async def publish_review(
     return PublishResponse(review_id=review_id, status="published", destination=destination)
 
 
-frontend_dist = Path(__file__).resolve().parents[3] / "frontend" / "dist"
+source_root = Path(__file__).resolve().parents[3]
+project_root = source_root if (source_root / "frontend").exists() else Path.cwd()
+frontend_dist = project_root / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
 
