@@ -5,7 +5,7 @@
 
 ImpactLint reviews proposed warehouse schema changes against catalog metadata before they reach production. It parses SQL, traces downstream lineage, scores risk from ownership, tags, and quality signals, then produces a migration plan and CI-friendly review artifacts.
 
-**Live demo:** [impactlint.vercel.app](https://impactlint.vercel.app)
+**Live demo:** [impactlint.vercel.app](https://impactlint.vercel.app) | **Demo video:** [YouTube (1:48)](https://youtu.be/I5Kou4vthdM)
 
 ![ImpactLint reviewing a warehouse contract](docs/impactlint-review.png)
 

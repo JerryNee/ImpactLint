@@ -22,6 +22,10 @@ https://impactlint.vercel.app
 
 https://github.com/JerryNee/ImpactLint
 
+## Demo video
+
+https://youtu.be/I5Kou4vthdM
+
 ## Built with
 
 DataHub MCP, Paritok, FastAPI, React, TypeScript, sqlglot, XYFlow, Vercel

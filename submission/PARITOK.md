@@ -16,6 +16,10 @@ https://impactlint.vercel.app
 
 https://github.com/JerryNee/ImpactLint
 
+## Demo video
+
+https://youtu.be/I5Kou4vthdM
+
 ## Built with
 
 Paritok, DataHub MCP, FastAPI, React, TypeScript, sqlglot, XYFlow, Vercel
@@ -55,3 +59,5 @@ The next step is a CI integration that reviews migration pull requests automatic
 ## Feedback entry
 
 The hosted compression response currently exposes `compressed` and `gpu_available`, but not auditable usage or provenance. ImpactLint has to calculate token counts locally with an assumed tokenizer and cannot reconcile a review with dashboard accounting. A structured response containing input/output token counts, tokenizer, model version, request ID, and latency would make measured savings independently reproducible. Optional selected source spans would also let evidence-sensitive clients verify retention without heuristics.
+
+Submitted as [Paritok issue #18](https://github.com/Paritok-official/paritok-4b-v1/issues/18).
