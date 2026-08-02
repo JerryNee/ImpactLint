@@ -12,11 +12,27 @@ The project is built for the 2026 DataHub Agent Hackathon and Paritok Token Effi
 1. Parse the proposed migration into a structured SQL AST with `sqlglot`.
 2. Read schema, lineage, ownership, tags, and quality metadata through DataHub MCP.
 3. Compute field-aware blast radius and a deterministic, evidence-backed risk score.
-4. Send the complete evidence packet to Paritok's hosted GPU and measure the returned context.
+4. Segment the normalized review and raw entity response, then compress them on Paritok's hosted GPU.
 5. Generate a migration plan, dbt guard, review manifest, and compressed-context sample.
 6. Publish the review as a DataHub document and tag the source asset through MCP.
 
-ImpactLint never invents token savings. The Paritok result is shown only after a successful hosted GPU response; otherwise the model step is marked as skipped.
+ImpactLint never invents token savings. The Paritok result is shown only after a successful hosted GPU response; otherwise the model step is marked as skipped. Its extractive evidence guard accepts only complete lines found in the original DataHub context, rejects model rewrites, and restores required change, asset, lineage, and risk lines before reporting the final token count.
+
+## Measured live run
+
+On August 2, 2026, the checked-in customer-key scenario ran against a local DataHub quickstart through the official MCP server and Paritok's hosted GPU:
+
+| Measurement | Result |
+| --- | ---: |
+| Original DataHub review context | 7,635 tokens |
+| Raw Paritok model output | 2,476 tokens |
+| Guarded final context | 2,475 tokens |
+| Final reduction | 67.6% |
+| Original lines selected | 75 |
+| Required evidence lines | 18 checked, 1 restored |
+| Protected identifiers | 25 checked, 0 restored |
+
+The captured, non-secret result is available in [`examples/live-review-summary.json`](examples/live-review-summary.json). Hosted latency and compression output can vary between runs.
 
 ## Local development
 
@@ -63,11 +79,12 @@ Set `IMPACTLINT_MODE=datahub`, then start ImpactLint with `npm run dev`. The see
 
 ## Hosted Paritok demo
 
-Create a free API key in the [Paritok dashboard](https://www.paritok.com/dashboard), set `PARITOK_API_KEY`, and run a review. ImpactLint sends only the structured evidence packet to `POST /api/compress`; the response produces:
+Create a free API key in the [Paritok dashboard](https://www.paritok.com/dashboard), set `PARITOK_API_KEY`, and run a review. ImpactLint sends bounded, line-oriented segments to `POST /api/compress`; the response produces:
 
-- Exact original and compressed token counts
+- Exact original, raw model-output, and guarded final token counts
 - Tokens saved and reduction percentage
-- `artifacts/paritok-context.txt`, containing the returned compressed context
+- Selected-source and restored-evidence line counts
+- `artifacts/paritok-context.txt`, containing the verified final context
 - Usage associated with the API key in Paritok's official dashboard
 
 ## Verification

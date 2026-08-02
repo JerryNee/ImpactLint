@@ -186,8 +186,13 @@ export function ReviewView({
                 <div className="compression-result">
                   <Zap aria-hidden="true" />
                   <div>
-                    <strong>{review.compression.reduction_percent}% fewer context tokens</strong>
-                    <span>Paritok hosted GPU</span>
+                    <strong>{review.compression.reduction_percent}% fewer final context tokens</strong>
+                    <span>
+                      Paritok GPU output: {review.compression.model_output_tokens?.toLocaleString()} tokens ·{" "}
+                      {review.compression.source_lines_selected} source lines selected ·{" "}
+                      {review.compression.evidence_lines_restored} evidence{" "}
+                      {review.compression.evidence_lines_restored === 1 ? "line" : "lines"} restored
+                    </span>
                   </div>
                   <code>
                     {review.compression.original_tokens.toLocaleString()} →{" "}

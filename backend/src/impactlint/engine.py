@@ -1,5 +1,7 @@
 import json
 from collections import defaultdict, deque
+from dataclasses import dataclass
+from typing import Any
 
 from impactlint.models import (
     Asset,
@@ -13,6 +15,13 @@ from impactlint.models import (
 
 BREAKING_KINDS = {"rename_column", "drop_column", "alter_column"}
 CRITICAL_TAGS = {"tier 1", "sox", "executive", "production ml", "pii"}
+RAW_SEGMENT_MAX_CHARS = 6_500
+
+
+@dataclass(frozen=True)
+class CompressionContext:
+    segments: tuple[str, ...]
+    required_lines: tuple[str, ...]
 
 
 def affected_assets(context: CatalogContext, operations: list[ChangeOperation]) -> list[Asset]:
@@ -290,13 +299,107 @@ def context_payload(
     context: CatalogContext,
     operations: list[ChangeOperation],
     affected: list[Asset],
-) -> dict:
-    return {
-        "target": next(asset.model_dump() for asset in context.assets if asset.urn == context.root_urn),
-        "operations": [operation.model_dump() for operation in operations],
-        "affected_assets": [asset.model_dump() for asset in affected],
-        "lineage": [edge.model_dump() for edge in context.edges],
-    }
+    signals: list[ImpactSignal],
+) -> CompressionContext:
+    target = next(asset for asset in context.assets if asset.urn == context.root_urn)
+    transport = "MCP" if context.source == "datahub_mcp" else "fixture"
+    required_lines = [
+        "IMPACTLINT REVIEW EVIDENCE",
+        (
+            f"SOURCE | provider={context.source} | transport={transport} | "
+            f"responses={_values(sorted(context.raw_evidence))}"
+        ),
+    ]
+    required_lines.extend(
+        (
+            f"CHANGE | kind={operation.kind} | table={operation.table or 'none'} | "
+            f"field={operation.field or 'none'} | replacement={operation.replacement or 'none'} | "
+            f"sql={operation.rendered_sql}"
+        )
+        for operation in operations
+    )
+    required_lines.append(f"WARNING TARGET | {_asset_fact(target)}")
+    required_lines.extend(f"WARNING AFFECTED | {_asset_fact(asset)}" for asset in affected)
+    required_lines.extend(
+        f"WARNING LINEAGE | source={edge.source} | target={edge.target} | kind={edge.kind}"
+        for edge in context.edges
+    )
+    required_lines.extend(
+        (
+            f"WARNING SIGNAL | id={signal.id} | severity={signal.severity.value} | "
+            f"title={signal.title} | detail={signal.detail}"
+        )
+        for signal in signals
+    )
+    required_lines.append(
+        f"END | affected={len(affected)} | lineage_edges={len(context.edges)} | signals={len(signals)}"
+    )
+
+    descriptions = [
+        f"INFO DESCRIPTION | asset={asset.name} | text={asset.description}"
+        for asset in [target, *affected]
+        if asset.description
+    ]
+    core_lines = [*required_lines[:3], *descriptions, *required_lines[3:]]
+    entity_response = context.raw_evidence.get("get_entities")
+    raw_payload = {"get_entities": entity_response} if entity_response is not None else {}
+    raw_lines = list(_flatten_raw_evidence(raw_payload))
+    raw_segments = _chunk_log_lines(raw_lines)
+    return CompressionContext(
+        segments=("\n".join(core_lines), *raw_segments),
+        required_lines=tuple(required_lines),
+    )
+
+
+def _asset_fact(asset: Asset) -> str:
+    return (
+        f"name={asset.name} | urn={asset.urn} | platform={asset.platform} | layer={asset.layer} | "
+        f"depends_on={_values(asset.depends_on_fields)} | fields={_values(asset.fields)} | "
+        f"owners={_values(asset.owners)} | tags={_values(asset.tags)} | "
+        f"quality={_values(asset.quality_signals)}"
+    )
+
+
+def _values(values: list[str]) -> str:
+    return ", ".join(values) if values else "none"
+
+
+def _flatten_raw_evidence(value: Any, path: str = "datahub") -> list[str]:
+    if isinstance(value, dict):
+        if not value:
+            return [f"INFO MCP_RESPONSE | path={path} | value={{}}"]
+        return [
+            line
+            for key in sorted(value)
+            for line in _flatten_raw_evidence(value[key], f"{path}.{key}")
+        ]
+    if isinstance(value, list):
+        if not value:
+            return [f"INFO MCP_RESPONSE | path={path} | value=[]"]
+        return [
+            line
+            for index, item in enumerate(value)
+            for line in _flatten_raw_evidence(item, f"{path}[{index}]")
+        ]
+    rendered = json.dumps(value, ensure_ascii=True, sort_keys=True)
+    return [f"INFO MCP_RESPONSE | path={path} | value={rendered}"]
+
+
+def _chunk_log_lines(lines: list[str]) -> tuple[str, ...]:
+    if not lines:
+        return ()
+    chunks: list[str] = []
+    current = ["DATAHUB MCP RAW RESPONSE"]
+    current_chars = len(current[0])
+    for line in lines:
+        if len(current) > 1 and current_chars + len(line) + 1 > RAW_SEGMENT_MAX_CHARS:
+            chunks.append("\n".join(current))
+            current = ["DATAHUB MCP RAW RESPONSE"]
+            current_chars = len(current[0])
+        current.append(line)
+        current_chars += len(line) + 1
+    chunks.append("\n".join(current))
+    return tuple(chunks)
 
 
 def _risk_level(score: int) -> Severity:

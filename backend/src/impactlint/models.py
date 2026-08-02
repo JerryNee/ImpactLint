@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -43,6 +43,7 @@ class CatalogContext(BaseModel):
     assets: list[Asset]
     edges: list[GraphEdge]
     source: Literal["fixture", "datahub_mcp"]
+    raw_evidence: dict[str, Any] = Field(default_factory=dict, exclude=True)
 
 
 class Scenario(BaseModel):
@@ -103,8 +104,14 @@ class CompressionMetrics(BaseModel):
     status: Literal["measured", "not_connected"]
     original_tokens: int
     compressed_tokens: int | None = None
+    model_output_tokens: int | None = None
     tokens_saved: int | None = None
     reduction_percent: float | None = None
+    source_lines_selected: int = 0
+    evidence_lines_checked: int = 0
+    evidence_lines_restored: int = 0
+    evidence_terms_checked: int = 0
+    evidence_terms_restored: int = 0
     source: str
 
 

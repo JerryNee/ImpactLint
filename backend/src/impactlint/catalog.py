@@ -63,6 +63,7 @@ class DataHubMCPProvider(CatalogProvider):
         edges = _normalize_edges(lineage_payload, dataset_urn)
 
         known_urns = {asset.urn for asset in assets}
+        deep_lineage_payloads: dict[str, Any] = {}
         for asset in assets:
             if asset.layer <= 1:
                 continue
@@ -70,6 +71,7 @@ class DataHubMCPProvider(CatalogProvider):
                 "get_lineage",
                 {"urn": asset.urn, "upstream": True, "max_hops": 1, "max_results": 100},
             )
+            deep_lineage_payloads[asset.urn] = upstream_payload
             edges.extend(_direct_upstream_edges(upstream_payload, asset.urn, known_urns))
 
         if not assets:
@@ -79,6 +81,11 @@ class DataHubMCPProvider(CatalogProvider):
             assets=assets,
             edges=list({(edge.source, edge.target): edge for edge in edges}.values()),
             source="datahub_mcp",
+            raw_evidence={
+                "get_entities": entity_payload,
+                "get_downstream_lineage": lineage_payload,
+                "get_direct_upstreams": deep_lineage_payloads,
+            },
         )
 
     async def publish_review(self, review: ReviewResponse) -> str:

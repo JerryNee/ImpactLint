@@ -59,10 +59,37 @@ class ReviewService:
         steps.append(_step("artifacts", "Generate migration artifacts", f"{len(artifacts)} files", started))
 
         started = perf_counter()
-        payload = context_payload(context, operations, affected)
+        payload = context_payload(context, operations, affected, signals)
+        protected_terms = list(
+            dict.fromkeys(
+                [
+                    target.name,
+                    *[
+                        value
+                        for operation in operations
+                        for value in (operation.field, operation.replacement)
+                        if value
+                    ],
+                    *[asset.name for asset in affected],
+                    *[owner for asset in [target, *affected] for owner in asset.owners],
+                    *[tag for asset in [target, *affected] for tag in asset.tags],
+                    *[
+                        signal
+                        for asset in [target, *affected]
+                        for signal in asset.quality_signals
+                    ],
+                ]
+            )
+        )
         compressed_context, compression = await self.paritok.compress_context(
-            payload,
-            "Preserve evidence needed to explain the highest-risk schema impact and migration order.",
+            payload.segments,
+            (
+                "Compress the DataHub MCP output for a downstream reviewer. Remove repeated API "
+                "envelopes and low-value metadata. Keep WARNING lines verbatim and never invent values."
+            ),
+            protected_terms,
+            required_lines=payload.required_lines,
+            kind="log_output",
         )
         if compressed_context:
             artifacts.append(

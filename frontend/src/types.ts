@@ -65,8 +65,14 @@ export interface CompressionMetrics {
   status: "measured" | "not_connected";
   original_tokens: number;
   compressed_tokens: number | null;
+  model_output_tokens: number | null;
   tokens_saved: number | null;
   reduction_percent: number | null;
+  source_lines_selected: number;
+  evidence_lines_checked: number;
+  evidence_lines_restored: number;
+  evidence_terms_checked: number;
+  evidence_terms_restored: number;
   source: string;
 }
 
